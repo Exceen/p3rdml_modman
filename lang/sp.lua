@@ -57,4 +57,5 @@ TEXT = {
     mods_applied = "Mods Aplicados",
     no_mods = "No se encontraron mods",
     always_clear = "Siempre limpiar archivos",
+    invalid_iso = "ISO no valida",
 }

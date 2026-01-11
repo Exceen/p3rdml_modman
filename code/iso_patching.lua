@@ -66,12 +66,13 @@ function patch_menu() --> nil
         msg_box(TEXT.patch_canceled, 50)
         return
     end
-    local patch_path = find_file("PATCHES/", TEXT.select_patch)
-    if iso_path != nil and patch_path != nil then
-        patch_iso(patch_path, iso_path)
-        msg_box(TEXT.patch_applied, 50)
+    local iso_info = game.info(iso_path)
+    if iso_info and iso_info.DISC_ID == "ULJM05800" then
+        patch_iso("PATCHES/PSP.BIN", iso_path)
+    elseif iso_info and iso_info.DISC_ID == "NPJB40001" then
+        patch_iso("PATCHES/HD.BIN", iso_path)
     else
-        msg_box(TEXT.patch_canceled, 50)
+        msg_box(TEXT.invalid_iso, 50)
     end
 end
 
