@@ -1,7 +1,7 @@
 collectgarbage()
 color.loadpalette()
 
---dofile "code/anim_compiler.lua"
+dofile "code/anim_compiler.lua"
 dofile "code/select_equipment.lua"
 dofile "code/mods.lua"
 
@@ -34,7 +34,7 @@ function create_index(MODS) --> nil
     file:close()
 end
 
-function file_copy(origin, dest, is_file) --> nil
+function file_copy(origin, dest, is_file, save_size) --> nil
     local target
     if not is_file and not files.exists(dest) then
         files.mkdir(dest)
@@ -51,7 +51,9 @@ function file_copy(origin, dest, is_file) --> nil
     end
     
     file = io.open(target, "wb")
-    file:write(int_to_bytes(#file_data))
+    if save_size then
+        file:write(int_to_bytes(#file_data))
+    end
     file:write(file_data)
     file:close()
 end
@@ -65,7 +67,7 @@ function copy_file (mod, origin, dest) --> nil
     if files.exists("ms0:/"..modloader_root.."/NATIVEPSP/"..dest) then
         files.delete("ms0:/"..modloader_root.."/NATIVEPSP/"..dest)
     end
-    file_copy(MODS_DIR..mod.."/"..origin, "ms0:/"..modloader_root.."/NATIVEPSP/"..dest, true)
+    file_copy(MODS_DIR..mod.."/"..origin, "ms0:/"..modloader_root.."/NATIVEPSP/"..dest, true, true)
 end
 
 function get_target(mod_id) --> str
@@ -92,9 +94,12 @@ function install_mods (mods) --> nil
     replaced_files = {}
     local dest_ids = ""
     local file_mods  = {}
+    local anim_mods  = {}
+    local code_mods  = {}
     local set_mods   = {}
     
     local do_build_patches = false
+    local do_build_mods = false
     local compile_anims = false
 
     local mod, info
@@ -102,6 +107,13 @@ function install_mods (mods) --> nil
     for mod, info in pairs(mods) do
         if info["enabled"] then
             if info["type"] == "Pack" then
+            elseif info["type"] == "Code" then
+                do_build_mods = true
+                if not code_mods[info.priority] then
+                    prio_set = {}
+                    code_mods[info.priority] = prio_set
+                end
+                table.insert(code_mods[info.priority], mod)
             elseif info["type"] == "EquipSET" then
                 dest_ids = dest_ids..mod..":"..info["dest_id"]..";"
                 file = split(get_mod_files(mod), ";")
@@ -116,10 +128,10 @@ function install_mods (mods) --> nil
                     dest_ids = dest_ids..mod..":"..info["dest_id"]..";"
                 end
 
-                --if info["dest_id"] != nil and info["has_animations"] then
-                --    anim_mods[mod] = info["dest_id"]
-                --    compile_anims = true
-                --end
+                if info["dest_id"] != nil and info["has_animations"] then
+                    anim_mods[mod] = info["dest"] - 3388
+                    compile_anims = true
+                end
 
                 --if info["dest_id"] != nil and info["has_audio"] then
                 --    local audio = split(ini.read(MODS_DIR..mod.."/mod.ini", "MOD INFO", "Audio", "null"), ";")
@@ -144,9 +156,51 @@ function install_mods (mods) --> nil
     if #set_mods > 0 then
         copy_sets(set_mods)
     end
+    if do_build_mods > 0 then
+        build_mods_bin(code_mods)
+        file_copy(data_dir.."/PRELOAD.BIN", "ms0:/"..modloader_root, false)
+    end
+    if compile_anims then
+        build_animations(anim_mods)
+    end
     create_index(replaced_files)
 
     msg_box(TEXT.mods_applied, 50)
+end
+
+function build_mods_bin (mod_table) --> nil
+    local mod_files, file_name, file, priority
+    file = io.open("ms0:/"..modloader_root.."/MMMODS.BIN", "w")
+
+    for priority=0, 5 do
+        if mod_table[tostring(priority)] then
+            for _, mod in pairs(mod_table[tostring(priority)]) do
+                mod_files = get_mod_files(mod)
+                for mod_file in string.gmatch(mod_files, "([^';']+)") do
+                    file_name = string.upper(files.nopath(mod_file))
+                    file:write(string.char(string.len(file_name)+2))
+                    file:write("/"..file_name..string.char(0))
+
+                    file_copy(MODS_DIR..mod.."/"..mod_file, "ms0:/"..modloader_root.."/MMMODS", false)
+                end
+            end
+        end
+    end
+
+    file:write(string.char(255))
+    file:close()
+end
+
+function build_animations (anim_mods) --> nil
+    local animations = {}
+    --local mods = ""
+    for mod, mdl_id in pairs(anim_mods) do
+        --mods = mods..mod..":"..mdl_id..";"
+        local animpath = MODS_DIR..mod.."/"..ini.read(MODS_DIR..mod.."/mod.ini", "MOD INFO", "Animation", "null")
+        table.insert(animations, {animpath, mdl_id})
+    end
+    --ini.write(anim_db, "Anim", mods)
+    build_anim_pack(animations, true)
 end
 
 function copy_sets(set_mods) --> nil

@@ -90,6 +90,7 @@ function install_mods (mods) --> nil
     local patch_mods = {}
     
     local do_build_patches = false
+    local do_build_mods = false
     local compile_anims = false
 
     local mod, info
@@ -98,7 +99,12 @@ function install_mods (mods) --> nil
         if info["enabled"] then
             if info["type"] == "Pack" then
             elseif info["type"] == "Code" then
-                table.insert(code_mods, mod)
+                do_build_mods = true
+                if not code_mods[info.priority] then
+                    prio_set = {}
+                    code_mods[info.priority] = prio_set
+                end
+                table.insert(code_mods[info.priority], mod)
             elseif info["type"] == "Patch" then
                 do_build_patches = true
 
@@ -161,7 +167,8 @@ function install_mods (mods) --> nil
     if #cat_set_mods > 0 then
         copy_cat_sets(cat_set_mods)
     end
-    if #code_mods > 0 then
+
+    if do_build_mods then
         build_mods_bin(code_mods)
     end
     if compile_anims then
@@ -246,18 +253,22 @@ function build_animations (anim_mods) --> nil
     build_anim_pack(animations)
 end
 
-function build_mods_bin (mod_list) --> nil
-    local mod_files, file_name, file
+function build_mods_bin (mod_table) --> nil
+    local mod_files, file_name, file, priority
     file = io.open("ms0:/"..modloader_root.."/MODS.BIN", "w")
+    
+    for priority=0, 5 do
+        if mod_table[tostring(priority)] then
+            for _, mod in pairs(mod_table[tostring(priority)]) do
+                mod_files = get_mod_files(mod)
+                for mod_file in string.gmatch(mod_files, "([^';']+)") do
+                    file_name = string.upper(files.nopath(mod_file))
+                    file:write(string.char(string.len(file_name)+2))
+                    file:write("/"..file_name..string.char(0))
 
-    for _, mod in pairs(mod_list) do
-        mod_files = get_mod_files(mod)
-        for mod_file in string.gmatch(mod_files, "([^';']+)") do
-            file_name = string.upper(files.nopath(mod_file))
-            file:write(string.char(string.len(file_name)+2))
-            file:write("/"..file_name..string.char(0))
-
-            file_copy(MODS_DIR..mod.."/"..mod_file, "ms0:/"..modloader_root.."/MODS", false)
+                    file_copy(MODS_DIR..mod.."/"..mod_file, "ms0:/"..modloader_root.."/MODS", false)
+                end
+            end
         end
     end
 

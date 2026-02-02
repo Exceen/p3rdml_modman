@@ -1,6 +1,11 @@
 collectgarbage()
 color.loadpalette()
 
+file = io.open("VERSION", "r")
+VERSION = file:read()
+file:close()
+
+
 dofile "code/atlas.lua"
 dofile "code/msg_box.lua"
 dofile "code/iso_patching.lua"
@@ -44,7 +49,7 @@ while true do
         if fuc_logo then fuc_logo:blit(369, 1, 1, 1, 109, 61) end
     end
 
-    screen.print(23, 257, "v0.18.3")
+    screen.print(23, 257, VERSION)
 
     if buttons.right then
         selection = selection + 1
@@ -83,7 +88,7 @@ while true do
             replaced_db = "user/fuc/replaced_files.ini"
             dest_ids_db = "user/fuc/dest_ids.ini"
             data_dir = "DATA_FU"
-            anim_start_offset = nil
+            anim_start_offset = 0x08800250
             MODS_DIR = "FU_MODS/"
             dofile "code/fu_main.lua"
         end

@@ -20,6 +20,7 @@ function load_list () --> table[str, table[str, any], table[str], int
             local game_ver = ini.read(dirs["path"].."/mod.ini", "MOD INFO", "Version", "NOHD")
             local dependencies  = ini.read(dirs["path"].."/mod.ini", "MOD INFO", "Depends", "null")
             local script = ini.read(dirs["path"].."/mod.ini", "MOD INFO", "Script", "null")
+            local priority = ini.read(dirs["path"].."/mod.ini", "MOD INFO", "Priority", "3")
             local type5f = (string.sub(mod_type, 1, 5))
             local is_equip = type5f == "Equip"
             if game_ver == game_version or (not (game_version == "FUC") and (is_equip or game_ver == "BOTH")) then
@@ -34,6 +35,7 @@ function load_list () --> table[str, table[str, any], table[str], int
                     has_audio = has_audio,
                     has_animations = has_animations,
                     depends = dependencies,
+                    priority = priority,
                     script = script
                 }
                 table.insert(mod_ids, string.lower(dirs["name"]))

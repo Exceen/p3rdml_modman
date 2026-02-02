@@ -42,6 +42,14 @@ Code mods may also reference multiple files to be enabled as a single mod.
     Files="FILE1;FILE2;FILE3"
     Type="Code"
 
+In order for mods with dependencies to be loaded in the right order, a priority system is in place. A number (between double quotes) from 0 to 5 may be used to affect loading order, priority 0 should be reserved for API/Core level mods only. If no priority is provided, 3 is the default value.
+
+    [MOD INFO]
+    Name="MOD NAME"
+    Files="FILE"
+    Type="Code"
+    Priority="3"
+
 ### Specific File Replacement
 
 File replacement mods must reference a series of at least one file, and the same number of target ids indicating the files to replace.

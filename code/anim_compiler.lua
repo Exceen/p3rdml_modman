@@ -27,7 +27,7 @@ WPN_TYPES = {
     HH = 12
 }
 
-function load_anim (path, mdl_id, addr) --> bytes
+function load_anim (path, mdl_id, addr, fu) --> bytes
     local file = io.open(path, "r")
     local json_string = file:read("*a")
     file:close()
@@ -37,9 +37,15 @@ function load_anim (path, mdl_id, addr) --> bytes
     local mdl_addr = #data["model"] > 0 and addr or 0
     local tex_addr = #data["texture"] > 0 and addr + 0x1C*#data["model"] or 0
     local resting_pos = data["resting_pos"] and data["resting_pos"] or 0
-
-    local bin = string.char(WPN_TYPES[data["type"]:upper()]).."\00"
-    bin = bin..string.char(mdl_id)..string.char(#data["model"])..string.char(#data["texture"]).."\00"..string.char(resting_pos).."\00"
+    
+    local bin
+    if fu then
+        bin = string.char(mdl_id).."\00"
+        bin = bin..string.char(#data["model"])..string.char(#data["texture"]).."\00\00"..string.char(resting_pos).."\00"
+    else
+        bin = string.char(WPN_TYPES[data["type"]:upper()]).."\00"
+        bin = bin..string.char(mdl_id)..string.char(#data["model"])..string.char(#data["texture"]).."\00"..string.char(resting_pos).."\00"
+    end
     bin = bin..int_to_bytes(mdl_addr)..int_to_bytes(tex_addr).."\00\00\00\00"
 
     entry = bin
@@ -62,16 +68,20 @@ function load_anim (path, mdl_id, addr) --> bytes
 end
 
 
-function build_anim_pack (anims) --> bytes
+function build_anim_pack (anims, fu) --> bytes
+    local file
     local entries = ""
     local anim_data = ""
     for _, anim in pairs(anims) do
-        anim = load_anim(anim[1], anim[2], anim_start_offset + 4 + 0x14 * #anims + #anim_data)
+        anim = load_anim(anim[1], anim[2], anim_start_offset + 4 + 0x14 * #anims + #anim_data, fu)
         entries = entries..anim[1]
         anim_data = anim_data..anim[2]
     end
-    
-    local file = io.open("ms0:/"..modloader_root.."/MODS/SPANIMPACK.BIN", "wb")
+    if fu then
+        file = io.open("ms0:/"..modloader_root.."/MMMODS/SPANIMPACK.BIN", "wb")
+    else
+        file = io.open("ms0:/"..modloader_root.."/MODS/SPANIMPACK.BIN", "wb")
+    end
     file:write(int_to_bytes(anim_start_offset)..int_to_bytes(#entries+4+#anim_data))
     file:write(entries.."\255\255\255\255")
     file:write(anim_data.."\255\255\255\255\0\0\0\0")
