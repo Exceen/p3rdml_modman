@@ -61,6 +61,36 @@ function sp_text_line_width(line, size) --> int
     return width
 end
 
+function multiline_sp_print(text, x, y, size, col) --> nil
+    local parts = split(text, "\\")
+    local i
+    for i=0,#parts-1 do
+        sp_print(parts[i+1], x, y + math.floor(i*size*18), size, col)
+    end
+end
+
+function big_box (title, text) --> nil
+    while true do
+        if game_sel_bg then game_sel_bg:blit(0,0) end
+        if title then
+            sp_print(title, 240-(sp_text_width(title)/2), 12, 1, color.black)
+        end
+
+        if text then
+            multiline_sp_print(text, 20, 40, .6, color.black)
+        end
+
+        sp_print(TEXT.press_circle, BOX_CENTER_X-(sp_text_width(TEXT.press_circle, .6)/2), 240, .6, color.black)
+
+        screen.flip()
+
+        buttons.read()
+        if buttons.circle then
+            break
+        end
+    end
+end
+
 function msg_box (line1, line1_y, line2, line2_y, line3, line3_y) --> nil
     while true do
         if game_sel_bg then game_sel_bg:blit(0,0) end

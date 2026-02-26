@@ -156,7 +156,7 @@ function install_mods (mods) --> nil
     if #set_mods > 0 then
         copy_sets(set_mods)
     end
-    if do_build_mods > 0 then
+    if do_build_mods then
         build_mods_bin(code_mods)
         file_copy(data_dir.."/PRELOAD.BIN", "ms0:/"..modloader_root, false)
     end
@@ -275,9 +275,9 @@ function main () --> nil
     end
 
     screen.print(49, 53, TEXT.mod_list, 0.6, color.yellow)
-    screen.print(216, 53, (page+1).."/"..pages, 0.6)
+    screen.print(201 + (50 - screen.textwidth((page+1).."/"..pages, 0.6)) / 2, 53, (page+1).."/"..pages, 0.6)
 
-    local input_msg = " ::triangle::"..TEXT.apply.." ::square::"..TEXT.clear_and_apply..(circle_to_confirm and " ::circle::"..TEXT.toggle.." ::cross::"..TEXT.exit or " ::cross::"..TEXT.toggle.." ::circle::"..TEXT.exit)
+    local input_msg = " ::select::"..TEXT.description.." ::triangle::"..TEXT.apply.." ::square::"..TEXT.clear_and_apply..(circle_to_confirm and " ::circle::"..TEXT.toggle.." ::cross::"..TEXT.exit or " ::cross::"..TEXT.toggle.." ::circle::"..TEXT.exit)
     sp_print(input_msg, 476-sp_text_width(input_msg, 0.6), 257, 0.6)
     
     screen.print(23, 257, SORT_MODES[sort_mode])
@@ -357,6 +357,7 @@ function main () --> nil
 
     if (circle_to_confirm and buttons.circle) or (not circle_to_confirm and buttons.cross) then -- confirm button
         local dep_name, deps = "", nil
+        local missing_deps = ""
         local enabled_deps = {}
         local depends_met = true
         if not mods[mod_ids[page*10+index]]["enabled"] and mods[mod_ids[page*10+index]]["depends"] != "null" then
@@ -369,8 +370,8 @@ function main () --> nil
                         table.insert(enabled_deps, mods[mod]["name"])
                     end
                 else
+                    missing_deps = missing_deps..mod.."\n"
                     depends_met = false
-                    break
                 end
             end
             deps = ""
@@ -382,6 +383,8 @@ function main () --> nil
             end
             if depends_met then
                 toggle_mod(mods[mod_ids[page*10+index]])
+            else
+                msg_box(TEXT.missing_deps, 10, missing_deps, 40)
             end
         else
             toggle_mod(mods[mod_ids[page*10+index]])
@@ -402,6 +405,9 @@ function main () --> nil
         reverse_sort = not reverse_sort
         mod_ids = sort_mods(mods, mod_ids, SORTING_KEYS[sort_mode], reverse_sort)
         frame = 0
+    elseif buttons.select then  -- show description
+        desc = ini.read(MODS_DIR..mod_ids[page*10+index].."/mod.ini", "MOD INFO", "Description", "")
+        big_box(mods[mod_ids[page*10+index]]["name"], desc)
     elseif (circle_to_confirm and buttons.cross) or (not circle_to_confirm and buttons.circle) then -- cancel button
         break
     end

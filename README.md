@@ -200,6 +200,16 @@ Adding the `Version` key allows the mod manager to correctly load only mods that
 
 * If the `Version` key is omitted the mod manager will asume it's `NOHD`
 
+#### Description
+
+The `Description` key can be used to add text descriptions for mods. `\` is used to represent new lines.
+
+    [MOD INFO]
+    Name="MOD NAME"
+    Files="FILE"
+    Type="Code"
+    Description="Something about the mod.\Second  line."
+
 #### Dependencies
 
 By adding the `Depends` key, any mod may specify other mods they depend on, by listing their ids. As an example, a weapon mod that uses custom animations would depend on `File Replacer` and the `Weapon Animation Expansion` and it'd be set up as follows:

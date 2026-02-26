@@ -141,11 +141,13 @@ function get_deps(mods, mod, parent, iterations) --> table[str]
         return deps
     end
     for _, dep in pairs(deps) do
-        sub_deps = get_deps(mods, dep, mod, iterations - 1)
-        for _, sub_dep in pairs(sub_deps) do
-            if (not aux_deps[dep] and dep != parent) then
-                table.insert(deps, sub_dep)
-                aux_deps[dep] = true
+        if mods[dep] then
+            sub_deps = get_deps(mods, dep, mod, iterations - 1)
+            for _, sub_dep in pairs(sub_deps) do
+                if (not aux_deps[dep] and dep != parent) then
+                    table.insert(deps, sub_dep)
+                    aux_deps[dep] = true
+                end
             end
         end
     end

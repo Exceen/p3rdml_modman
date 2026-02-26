@@ -314,20 +314,16 @@ function main () --> nil
     end
 
     screen.print(49, 53, TEXT.mod_list, 0.6, color.yellow)
-    screen.print(216, 53, (page+1).."/"..pages, 0.6)
+    screen.print(201 + (50 - screen.textwidth((page+1).."/"..pages, 0.6)) / 2, 53, (page+1).."/"..pages, 0.6)
     
-    local input_msg = " ::triangle::"..TEXT.apply..(always_clear and "" or " ::square::"..TEXT.clear_and_apply)..(circle_to_confirm and " ::circle::"..TEXT.toggle.." ::cross::"..TEXT.exit or " ::cross::"..TEXT.toggle.." ::circle::"..TEXT.exit)
+    local input_msg = " ::select::"..TEXT.description.." ::triangle::"..TEXT.apply..(always_clear and "" or " ::square::"..TEXT.clear_and_apply)..(circle_to_confirm and " ::circle::"..TEXT.toggle.." ::cross::"..TEXT.exit or " ::cross::"..TEXT.toggle.." ::circle::"..TEXT.exit)
     if mods[mod_ids[page*10+index]]["script"] != "null" then
         input_msg = " ::start::"..TEXT.options..input_msg
     end
     sp_print(input_msg, 476-sp_text_width(input_msg, 0.6), 257, 0.6)
     
-    screen.print(23, 257, SORT_MODES[sort_mode])
-    if reverse_sort then
-        atlas:draw("sort_desc", 99, 256)
-    else
-        atlas:draw("sort_asc", 99, 256)
-    end
+    --sp_print(" ::r_button::"..SORT_MODES[sort_mode].." ::l_button::"..(reverse_sort and " ::sort_desc::" or " ::sort_asc::"), 49, 242, .8, color.black)
+    sp_print(SORT_MODES[sort_mode]..(reverse_sort and " ::sort_desc::" or " ::sort_asc::"), 2, 257, 0.6)
     y = 68
     draw.fillrect(41, y-16+16*index, 220, 15, color.new(50, 232, 1, sel_alpha))
     for i=page*10+1, (page == pages-1 and mod_count % 10 != 0) and (page*10) + mod_count % 10 or (page+1)*10 do
@@ -399,6 +395,7 @@ function main () --> nil
 
     if (circle_to_confirm and buttons.circle) or (not circle_to_confirm and buttons.cross) then -- confirm button
         local dep_name, deps = "", nil
+        local missing_deps = ""
         local enabled_deps = {}
         local depends_met = true
         if not mods[mod_ids[page*10+index]]["enabled"] and mods[mod_ids[page*10+index]]["depends"] != "null" then
@@ -411,8 +408,8 @@ function main () --> nil
                         table.insert(enabled_deps, mods[mod]["name"])
                     end
                 else
+                    missing_deps = missing_deps..mod.."\n"
                     depends_met = false
-                    break
                 end
             end
             deps = ""
@@ -424,6 +421,8 @@ function main () --> nil
             end
             if depends_met then
                 toggle_mod(mods[mod_ids[page*10+index]])
+            else
+                msg_box(TEXT.missing_deps, 10, missing_deps, 40)
             end
         else
             toggle_mod(mods[mod_ids[page*10+index]])
@@ -454,6 +453,9 @@ function main () --> nil
                 msg_box(TEXT.enable_install_scripts, 50)
             end
         end
+    elseif buttons.select then  -- show description
+        desc = ini.read(MODS_DIR..mod_ids[page*10+index].."/mod.ini", "MOD INFO", "Description", "")
+        big_box(mods[mod_ids[page*10+index]]["name"], desc)
     elseif (circle_to_confirm and buttons.cross) or (not circle_to_confirm and buttons.circle) then -- cancel button
         break
     end
