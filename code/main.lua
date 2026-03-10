@@ -37,6 +37,8 @@ end
 function clear_files () --> nil
     files.delete("ms0:/"..modloader_root.."/FILES/")
     files.mkdir("ms0:/"..modloader_root.."/FILES/")
+    files.delete("ms0:/"..modloader_root.."/MODS/")
+    files.mkdir("ms0:/"..modloader_root.."/MODS/")
 end
 
 function copy_file (mod, origin, dest) --> nil
